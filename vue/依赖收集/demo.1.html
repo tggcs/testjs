@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>依赖收集</title>
+</head>
+
+<body>
+  <script>
+    class Observer {
+      value
+      constructor(value) {
+        this.value = value
+        if (Array.isArray(value)) {
+          observeArray(value)
+        } else {
+          walk(value)
+        }
+      }
+    }
+
+    var uid = 0
+    class Dep {
+      id
+      subs
+      constructor () {
+        this.id = uid++
+        this.subs = []
+      }
+
+      
+    }
+
+    function observe(value) {
+      var ob
+      if (value.hasOwnProperty('__ob__')) {
+        ob = value.__ob__
+      } else {
+        ob = new Observer(value)
+      }
+      return ob
+    }
+
+    function walk(obj) {
+      Object.keys(obj).forEach(key => {
+        defineReactive(obj, key)
+      })
+    }
+
+    function defineReactive(obj, key) {
+      const dep = new Dep()
+      const property = Object.getOwnPropertyDescriptor(obj, key)
+      const getter = property && property.get
+      const setter = property && property.set
+
+      Object.defineProperties(obj, key, {
+        get: function reactiveGetter() {
+          var value = getter.call(obj)
+
+          return value
+        },
+        set: function reactiveSetter(nval) {
+          
+        }
+      })
+    }
+
+    var tg = {
+      name: 'tg',
+      country: 'china',
+      skills: ['js', 'css', 'sql'],
+      interest: [{
+        game: ['dota2', 'war3'],
+        eat: ['cake']
+      }]
+    }
+
+    var res = observe(tg)
+    console.log(res)
+    
+  </script>
+</body>
+
+</html>

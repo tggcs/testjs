@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>依赖收集</title>
+</head>
+
+<body>
+  <p>https://zhuanlan.zhihu.com/p/29318017</p>
+  <script>
+    // 观察属性变化
+    var tg = (() => {
+      var _tg = {}
+      var _name = ''
+      Object.defineProperty(_tg, 'name', {
+        get() {
+          console.log("get hit")
+          return _name
+        },
+        set(nval) {
+          console.log("set hit")
+          _name = nval
+        }
+      })
+      return _tg
+    })()
+  </script>
+
+  <script>
+    // 观察属性变化 封装一下
+    var tg2 = (() => {
+      var _tg2 = {
+        name: 'tg',
+        country: 'china'
+      }
+      observe(_tg2)
+      function defineReactive(obj, key, val) {
+        Object.defineProperty(obj, key, {
+          get() {
+            console.log(`${obj} ${key} get ${val}`)
+            return val
+          },
+          set(nval) {
+            console.log(`${obj} ${key} set ${nval}`)
+            val = nval
+          }
+        })
+      }
+      function observe(obj) {
+        Object.keys(obj).forEach(k => {
+          defineReactive(obj, k, obj[k])
+        })
+      }
+      return _tg2
+    })()
+  </script>
+
+  <script>
+    // 数组属性set 无法被观察
+    const dataarr = (() => {
+      const _data = {
+        arr: [1, 2, 3]
+      }
+      defineReactive(_data, 'arr', _data.arr)
+
+      function defineReactive(obj, key, val) {
+        Object.defineProperty(obj, key, {
+          get() {
+            console.log(`${obj} ${key} get ${val}`)
+            return val
+          },
+          set(nval) {
+            console.log(`${obj} ${key} set ${nval}`)
+            val = nval
+          }
+        })
+      }
+
+      return _data
+    })()
+  </script>
+
+  <script>
+    // 观察数组属性set  aop 代理push方法
+    const dataarr2 = (() => {
+      const _data = {
+        arr: [1, 2, 3]
+      }
+      const arrayMethods = Object.create(Array.prototype);
+      // 形成：arrayMethods.__proto__ -> Array.prototype
+      const originalPush = arrayMethods.push;
+      Object.defineProperty(arrayMethods, 'push', {
+        configurable: true,
+        enumerable: false,
+        writable: true,
+        value(...args) {
+          const result = originalPush.apply(this, args);
+          console.log('对数组进行了push操作，加入了值：', args);
+          return result;
+        }
+      })
+      _data.arr.__proto__ = arrayMethods
+      _data.arr.push([5, 6], 7) // 对数组进行了push操作，加入了值：[5, 6], 7
+      return _data
+    })()
+  </script>
+
+  <script>
+    // 简化版vue依赖收集
+    var tg3 = (() => {
+  
+
+      // 依赖收集器
+      class Dep {
+        static target
+        constructor() {
+          this.deps = []
+        }
+        depend() {
+          if (Dep.target && this.deps.indexOf(Dep.target) == -1) {
+            this.deps.push(Dep.target)
+          }
+        }
+        notify() {
+          this.deps.forEach(dep => {
+            dep()
+          })
+        }
+      }
+
+      class Observeable {
+        constructor(obj) {
+          return this.walk(obj)
+        }
+        walk(obj) {
+          Object.keys(obj).forEach(key => {
+            this.defineReactive(obj, key, obj[key])
+          })
+          return obj
+        }
+        defineReactive(obj, key, val) {
+          const dep = new Dep()
+          Object.defineProperty(obj, key, {
+            get() {
+              dep.depend()
+              return val
+            },
+            set(nval) {
+              val = nval
+              dep.notify()
+            }
+          })
+        }
+      }
+
+      class Watcher {
+        constructor (obj, key, cb, onComputedUpdate) {
+          this.obj = obj
+          this.key = key
+          this.cb = cb
+          this.onComputedUpdate = onComputedUpdate
+          return this.defineComputed()
+        }
+
+        defineComputed() {
+          const self = this
+          const onDepUpdated = () => {
+            const val = self.cb()
+            this.onComputedUpdate(val)
+          }
+          Object.defineProperty(self.obj, self.key, {
+            get() {
+              Dep.target = onDepUpdated
+              // 计算属性方法执行时，触发目标属性的getter，从而收集当前的target
+              const val = self.cb()
+              Dep.target = null
+              return val
+            },
+            set() {
+              console.error('计算属性无法被赋值')
+            }
+          })
+        }
+      }
+
+      const _tg3 = new Observeable({
+        name: 'tg',
+        country: 'china'
+      })
+
+      new Watcher(_tg3, 'type', () => {
+        // 调用country的get方法，在deps存入当前观察者 【this.deps.push(Dep.target)】
+        return _tg3.country == 'china' ? 'aisa' : 'unknow'
+      }, val => {
+        console.log(`我是${val}`)
+      })
+
+      console.log(`初始调用计算属性${_tg3.type}`)
+
+      return _tg3
+    })()
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+  <script>
+    // https://www.cnblogs.com/moqiutao/p/7371988.html
+
+    // call 和 apply 都是为了改变某个函数运行时的上下文（context）而存在的,换句话说，就是为了改变函数体内部 this 的指向
+    // apply、call 二者而言，作用完全一样，只是接受参数的方式不太一样
+    var numbers = [5, 458 , 120 , -215 ]; 
+    var maxInNumbers = Math.max.apply(Math, numbers),   //458
+        maxInNumbers = Math.max.call(Math, 5, 458 , 120 , -215); //458
+
+    // bind....
+  </script>
+</body>
+</html>
