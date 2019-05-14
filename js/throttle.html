@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>throttle 节流函数</title>
+</head>
+
+<body>
+  <div style="height: 1000px;"></div>
+  <script>
+    var count = 0
+    function test() { console.log(count++) }
+
+    // var test1 = () => {
+    //   window.onscroll = () => {
+    //     test()
+    //   }
+    // }
+
+    // test1()
+
+
+    function throttle(fn, delay) {
+      var timer = null
+      var previous = null
+      return () => {
+        var now = +new Date();
+        if ( !previous ) previous = now;
+
+        if ( now - previous > delay ) {
+          fn()
+          previous = now;
+        } else {
+          clearTimeout(timer)
+          timer = setTimeout(() => {
+            console.log('hit')
+            fn()
+          }, delay);
+        }
+      }
+    }
+    window.onscroll = throttle(test, 200)
+  </script>
+</body>
+
+</html>
